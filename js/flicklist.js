@@ -8,7 +8,7 @@ var model = {
 
 var api = {
   root: "https://api.themoviedb.org/3",
-  token: "2e2d6819642da6834e50e69454a41908" // TODO 0 put your api key here DONE
+  token: "2e2d6819642da6834e50e69454a41908" // TODO 0 (DONE) add your api key
 }
 
 
@@ -18,25 +18,40 @@ var api = {
  * the callback function that was passed in
  */
 function discoverMovies(callback) {
-	$.ajax({
-		url: api.root + "/discover/movie",
-		data: {
-			api_key: api.token,
-		},
-		success: function(response) {
-			console.log("We got a response from The Movie DB!");
-			console.log(response);
-			
-			// TODO 2 DONE
-			// update the model, setting its .browseItems property equal to the movies we recieved in the response
-			model.browseItems = response.results;
-			console.log("Here is the model:");
-			console.log(model);
-			// invoke the callback function that was passed in. 
-			callback();
-		}
-	});
-  
+  $.ajax({
+    url: api.root + "/discover/movie",
+    data: {
+      api_key: api.token
+    },
+    success: function(response) {
+      model.browseItems = response.results;
+      callback(response);
+    }
+  });
+}
+
+
+/**
+ * Makes an AJAX request to the /search endpoint of the API, using the 
+ * query string that was passed in
+ *
+ * if successful, updates model.browseItems appropriately and then invokes
+ * the callback function that was passed in
+ */
+function searchMovies(query, callback) {
+  // TODO 8 (DONE)
+
+  $.ajax({
+    url: api.root + "/search/movie",
+    data: {
+      api_key: api.token,
+      query: query
+    },
+    success: function(response) {
+      model.browseItems = response.results;
+      callback(response);
+    }
+  });
 }
 
 
@@ -44,45 +59,54 @@ function discoverMovies(callback) {
  * re-renders the page with new content, based on the current state of the model
  */
 function render() {
-  // TODO 7
-  // clear everything from both lists
+
+  // clear everything
   $("#section-watchlist ul").empty();
   $("#section-browse ul").empty();
-  
-  // TODO 6 DONE
-  // for each movie on the user's watchlist, insert a list item into the <ul> in the watchlist section
+
+  // insert watchlist items
   model.watchlistItems.forEach(function(movie) {
-  	var itemView = $("<li></li>").text(movie.original_title);
-  	$("#section-watchlist ul").append(itemView);
+    var title = $("<p></p>").text(movie.original_title);
+    var itemView = $("<li></li>")
+      .append(title)
+      .attr("class", "item-watchlist");
+      // TODO 3 (DONE see line above)
+      // give itemView a class attribute of "item-watchlist"
+
+    $("#section-watchlist ul").append(itemView);
   });
-  
-  // for each movie on the current browse list, 
+
+  // insert browse items
   model.browseItems.forEach(function(movie) {
-		// TODO 3 DONE
-		// insert a list item into the <ul> in the browse section
-		var title = $("<p></p>").text(movie.original_title);
-		
-		// TODO 4 DONE
-		// the list item should include a button that says "Add to Watchlist"
-		var button = $("<button></button>").text("Add to Watchlist").click(function() {
-			model.watchlistItems.push(movie);
-			render();
-			console.log("click!");
-			console.log(model);
-		});
-		var itemView = $("<li></li>").append(title).append(button);
-		$("#section-browse ul").append(itemView);
-		
-		// TODO 5 DONE
-		// when the button is clicked, this movie should be added to the model's watchlist and render() should be called again
+    var title = $("<h4></h4>").text(movie.original_title);
+    var button = $("<button></button>")
+      .text("Add to Watchlist")
+      .click(function() {
+        model.watchlistItems.push(movie);
+        render();
+      })
+      .prop("disabled", model.watchlistItems.indexOf(movie) !== -1);
+      // TODO 2 (DONE see line above)
+      // the button should be disabled if this movie is already in
+      // the user's watchlist
+      // see jQuery .prop() and Array.indexOf()
+
+
+    // TODO 1 (DONE)
+    // create a paragraph containing the movie object's .overview value
+    // then append the paragraph in between the title and the button
+    var overview = $("<p></p>").text(movie.overview);
+
+
+    // append everything to itemView, along with an <hr/>
+    var itemView = $("<li></li>")
+      .append($("<hr/>"))
+      .append(title)
+      .append(overview)
+      .append(button);
+
+    // append the itemView to the list
+    $("#section-browse ul").append(itemView);
   });
   
 }
-
-
-// When the HTML document is ready, we call the discoverMovies function,
-// and pass the render function as its callback
-$(document).ready(function() {
-  discoverMovies(render);
-});
-
